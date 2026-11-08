@@ -26,7 +26,7 @@ CEO_NAME = "Adeyemi Mary Owoeye"
 # IMPORTANT: Replace this with the business WhatsApp number.
 # Use country code, without +, spaces, or leading zero.
 # Example for a Nigerian number: 2348012345678
-VENDOR_WHATSAPP = "2348000000000"
+VENDOR_WHATSAPP = "2349113579070"
 
 ASSET_DIR = Path(__file__).parent / "assets"
 
