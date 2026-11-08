@@ -3,10 +3,12 @@ import streamlit.components.v1 as components
 from pathlib import Path
 from urllib.parse import quote
 import base64
+import html
+import mimetypes
 
 # =====================================================
 # MAMA-V-RAW FOOD COMPLEX
-# PROFESSIONAL FOOD BUSINESS WEBSITE
+# PROFESSIONAL BUSINESS WEBSITE
 # =====================================================
 
 st.set_page_config(
@@ -16,24 +18,88 @@ st.set_page_config(
 )
 
 # =====================================================
-# BUSINESS INFORMATION
+# BUSINESS SETTINGS
 # =====================================================
 
 BUSINESS_NAME = "MAMA-V-RAW FOOD COMPLEX"
-
 TAGLINE = "Quality & Farm-Fresh Raw Foodstuffs"
-
 CEO_NAME = "Adeyemi Mary Owoeye"
 
+# Replace with actual WhatsApp number
 WHATSAPP_NUMBER = "2348000000000"
 
-BUSINESS_ADDRESS = "Nigeria"
+# Change this password before publishing
+ADMIN_PASSWORD = "ChangeMyAdminPassword"
 
-ASSET_FOLDER = Path(__file__).parent / "assets"
+BASE_DIR = Path(__file__).parent
+ASSET_FOLDER = BASE_DIR / "assets"
+ASSET_FOLDER.mkdir(exist_ok=True)
 
 
 # =====================================================
-# CUSTOM CSS
+# IMAGE FILENAMES
+# =====================================================
+
+IMAGES = {
+    "Business Logo": "logo.jpg",
+    "CEO Portrait": "ceo.jpg",
+    "CEO Inspection": "ceo2.jpg",
+    "CEO Customer Relations": "ceo3.jpg",
+    "Beans": "bean.jpg",
+    "Rice": "rice.jpg",
+    "Semovita": "semovita.jpg",
+    "Tin Tomatoes": "tomato.jpg"
+}
+
+
+# =====================================================
+# PRODUCT DATABASE
+# =====================================================
+
+PRODUCTS = [
+    {
+        "name": "Honey/Oloyin Beans",
+        "price": 45000,
+        "unit": "Bag",
+        "image": "bean.jpg"
+    },
+
+    {
+        "name": "50kg Premium Rice",
+        "price": 65000,
+        "unit": "Bag",
+        "image": "rice.jpg"
+    },
+
+    {
+        "name": "Semovita (10kg)",
+        "price": 12500,
+        "unit": "Pack",
+        "image": "semovita.jpg"
+    },
+
+    {
+        "name": "Tin Tomatoes",
+        "price": 18000,
+        "unit": "Carton",
+        "image": "tomato.jpg"
+    }
+]
+
+
+# =====================================================
+# SESSION MANAGEMENT
+# =====================================================
+
+if "cart" not in st.session_state:
+    st.session_state.cart = {}
+
+if "admin_login" not in st.session_state:
+    st.session_state.admin_login = False
+
+
+# =====================================================
+# CUSTOM WEBSITE DESIGN
 # =====================================================
 
 st.markdown("""
@@ -42,11 +108,11 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 html, body, [class*="css"] {
-    font-family: 'Poppins', sans-serif;
+    font-family: Poppins, sans-serif;
 }
 
 .stApp {
-    background-color: #f4f7f3;
+    background: #f4f7f3;
 }
 
 .block-container {
@@ -59,7 +125,7 @@ html, body, [class*="css"] {
     padding: 25px;
     text-align: center;
     border-radius: 15px;
-    border-bottom: 5px solid #2e7d32;
+    border-top: 5px solid #2e7d32;
     box-shadow: 0 5px 20px rgba(0,0,0,0.08);
 }
 
@@ -67,10 +133,6 @@ html, body, [class*="css"] {
     color: #1b5e20;
     font-size: 30px;
     font-weight: 800;
-}
-
-.brand p {
-    color: #666;
 }
 
 .section-title {
@@ -91,13 +153,13 @@ html, body, [class*="css"] {
 
 .price {
     color: #2e7d32;
-    font-size: 22px;
+    font-size: 21px;
     font-weight: 800;
 }
 
 .order-box {
     background: white;
-    padding: 25px;
+    padding: 22px;
     border-radius: 15px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.08);
 }
@@ -109,17 +171,11 @@ html, body, [class*="css"] {
 }
 
 div.stButton > button {
-    background-color: #2e7d32;
+    background: #2e7d32;
     color: white;
     border-radius: 8px;
     font-weight: bold;
-    border: none;
     width: 100%;
-}
-
-div.stButton > button:hover {
-    background-color: #1b5e20;
-    color: white;
 }
 
 </style>
@@ -127,172 +183,114 @@ div.stButton > button:hover {
 
 
 # =====================================================
-# IMAGE FUNCTION
+# IMAGE DISPLAY FUNCTION
 # =====================================================
+
+def image_path(filename):
+    return ASSET_FOLDER / filename
+
 
 def display_image(filename, height=200):
 
-    image_path = ASSET_FOLDER / filename
+    path = image_path(filename)
 
-    if image_path.exists():
+    if path.is_file():
 
         st.image(
-            str(image_path),
+            str(path),
             use_container_width=True
         )
 
     else:
 
-        st.markdown(
-            f"""
-            <div style="
-                height:{height}px;
-                background:#e8f5e9;
-                border:1px dashed #2e7d32;
-                border-radius:12px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#1b5e20;
-                text-align:center;
-                ">
-                <div>
-                    <h2>🖼️</h2>
-                    <b>Image unavailable</b><br>
-                    {filename}
-                </div>
+        st.markdown(f"""
+        <div style="
+            height:{height}px;
+            background:#e8f5e9;
+            border:1px dashed #2e7d32;
+            border-radius:12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            text-align:center;
+            color:#1b5e20;
+        ">
+            <div>
+                <h2>🖼️</h2>
+                <b>Image unavailable</b><br>
+                {html.escape(filename)}
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # =====================================================
-# PRODUCT DATABASE
+# IMAGE CONVERSION FOR CEO SLIDESHOW
 # =====================================================
 
-PRODUCTS = {
+def image_data(filename):
 
-    "Beans (Honey/Oloyin)": {
-        "price": 45000,
-        "image": "bean.jpg",
-        "unit": "Bag"
-    },
-
-    "50kg Premium Rice": {
-        "price": 65000,
-        "image": "rice.jpg",
-        "unit": "Bag"
-    },
-
-    "Semovita (10kg)": {
-        "price": 12500,
-        "image": "semovita.jpg",
-        "unit": "Pack"
-    },
-
-    "Tin Tomatoes": {
-        "price": 18000,
-        "image": "tomato.jpg",
-        "unit": "Carton"
-    }
-
-}
-
-
-# =====================================================
-# SHOPPING CART
-# =====================================================
-
-if "cart" not in st.session_state:
-
-    st.session_state.cart = {}
-
-
-# =====================================================
-# HEADER
-# =====================================================
-
-st.markdown('<div class="brand">', unsafe_allow_html=True)
-
-display_image("logo.jpg", 150)
-
-st.markdown(
-    f"""
-    <h1>{BUSINESS_NAME}</h1>
-    <p>{TAGLINE}</p>
-    <b>Welcome! Quality foodstuffs at affordable prices.</b>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-
-# =====================================================
-# CEO SHOWCASE
-# =====================================================
-
-st.markdown(
-    '<h2 class="section-title">LEADERSHIP & VISION</h2>',
-    unsafe_allow_html=True
-)
-
-def get_image_data(filename):
-
-    path = ASSET_FOLDER / filename
+    path = image_path(filename)
 
     if not path.exists():
         return None
 
-    encoded = base64.b64encode(path.read_bytes()).decode()
+    mime = mimetypes.guess_type(path.name)[0] or "image/jpeg"
 
-    return f"data:image/jpeg;base64,{encoded}"
+    encoded = base64.b64encode(
+        path.read_bytes()
+    ).decode()
 
-
-ceo_slides = [
-    ("ceo.jpg", CEO_NAME, "CEO & Founder"),
-    ("ceo2.jpg", "Quality Assurance", "Inspecting quality food products"),
-    ("ceo3.jpg", "Customer Relations", "Serving customers with excellence")
-]
-
-slides = []
-
-for filename, title, subtitle in ceo_slides:
-
-    image_data = get_image_data(filename)
-
-    if image_data:
-
-        slides.append(
-            (image_data, title, subtitle)
-        )
+    return f"data:{mime};base64,{encoded}"
 
 
-if slides:
+# =====================================================
+# CEO AUTOMATIC SLIDESHOW
+# =====================================================
+
+def ceo_slideshow():
+
+    slide_details = [
+        ("ceo.jpg", CEO_NAME, "CEO & Founder"),
+        ("ceo2.jpg", "Quality Assurance", "Inspecting quality food products"),
+        ("ceo3.jpg", "Customer Relations", "Serving customers with excellence")
+    ]
+
+    slides = []
+
+    for filename, title, subtitle in slide_details:
+
+        img = image_data(filename)
+
+        if img:
+            slides.append((img, title, subtitle))
+
+    if not slides:
+
+        st.info("Upload CEO pictures using the Admin Dashboard.")
+
+        return
 
     slide_html = ""
 
-    for index, (image, title, subtitle) in enumerate(slides):
+    for i, (img, title, subtitle) in enumerate(slides):
 
-        active = "active" if index == 0 else ""
+        active = "active" if i == 0 else ""
 
         slide_html += f"""
         <div class="slide {active}">
-            <img src="{image}">
+            <img src="{img}">
             <div class="caption">
-                <h3>{title}</h3>
-                <p>{subtitle}</p>
+                <h3>{html.escape(title)}</h3>
+                <p>{html.escape(subtitle)}</p>
             </div>
         </div>
         """
 
-    carousel = f"""
+    page = f"""
     <html>
     <head>
     <style>
-
-    * {{ box-sizing:border-box; }}
 
     body {{
         margin:0;
@@ -304,7 +302,6 @@ if slides:
         height:400px;
         overflow:hidden;
         border-radius:15px;
-        background:#eee;
     }}
 
     .slide {{
@@ -340,7 +337,7 @@ if slides:
     <body>
 
     <div class="carousel">
-    {slide_html}
+        {slide_html}
     </div>
 
     <script>
@@ -369,18 +366,42 @@ if slides:
     </html>
     """
 
-    components.html(
-        carousel,
-        height=420
-    )
-
-else:
-
-    st.info("Upload CEO pictures into the assets folder to display the slideshow.")
+    components.html(page, height=420)
 
 
 # =====================================================
-# PRODUCT DISPLAY
+# WEBSITE HEADER
+# =====================================================
+
+st.markdown('<div class="brand">', unsafe_allow_html=True)
+
+display_image("logo.jpg", 140)
+
+st.markdown(f"""
+<h1>{BUSINESS_NAME}</h1>
+
+<p>{TAGLINE}</p>
+
+<b>Welcome! Quality foodstuffs at affordable prices.</b>
+
+</div>
+""", unsafe_allow_html=True)
+
+
+# =====================================================
+# LEADERSHIP SECTION
+# =====================================================
+
+st.markdown(
+    '<h2 class="section-title">LEADERSHIP & VISION</h2>',
+    unsafe_allow_html=True
+)
+
+ceo_slideshow()
+
+
+# =====================================================
+# PRODUCT CATALOGUE
 # =====================================================
 
 st.markdown(
@@ -390,22 +411,22 @@ st.markdown(
 
 columns = st.columns(4)
 
-for index, (name, details) in enumerate(PRODUCTS.items()):
+for index, product in enumerate(PRODUCTS):
 
     with columns[index]:
 
         st.markdown('<div class="product-card">', unsafe_allow_html=True)
 
-        display_image(details["image"])
+        display_image(product["image"])
 
-        st.subheader(name)
+        st.subheader(product["name"])
 
         st.markdown(
-            f'<div class="price">₦{details["price"]:,}</div>',
+            f'<div class="price">₦{product["price"]:,}</div>',
             unsafe_allow_html=True
         )
 
-        st.caption(f'Price per {details["unit"]}')
+        st.caption(f'Price per {product["unit"]}')
 
         quantity = st.number_input(
             "Quantity",
@@ -415,10 +436,9 @@ for index, (name, details) in enumerate(PRODUCTS.items()):
             key=f"quantity_{index}"
         )
 
-        if st.button(
-            "ADD TO ORDER",
-            key=f"add_{index}"
-        ):
+        if st.button("ADD TO ORDER", key=f"add_{index}"):
+
+            name = product["name"]
 
             if name in st.session_state.cart:
 
@@ -427,17 +447,19 @@ for index, (name, details) in enumerate(PRODUCTS.items()):
             else:
 
                 st.session_state.cart[name] = {
-                    "price": details["price"],
+                    "price": product["price"],
                     "quantity": quantity
                 }
 
-            st.success(f"{name} added to cart.")
+            st.success("Product added to cart.")
+
+            st.rerun()
 
         st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =====================================================
-# ORDER SUMMARY
+# SHOPPING CART
 # =====================================================
 
 st.markdown(
@@ -462,7 +484,7 @@ if st.session_state.cart:
         col1.write(name)
 
         col2.write(
-            f'₦{amount:,} ({item["quantity"]} unit(s))'
+            f'{item["quantity"]} unit(s) - ₦{amount:,}'
         )
 
         if col3.button("❌", key=f"remove_{name}"):
@@ -473,14 +495,11 @@ if st.session_state.cart:
 
     st.divider()
 
-    st.markdown(
-        f"## TOTAL: :green[₦{total:,}]"
-    )
+    st.markdown(f"## TOTAL: :green[₦{total:,}]")
 
 else:
 
     st.info("Your shopping cart is empty.")
-
 
 if st.button("CLEAR SHOPPING CART"):
 
@@ -492,7 +511,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =====================================================
-# CUSTOMER INFORMATION
+# CUSTOMER ORDER FORM
 # =====================================================
 
 st.markdown(
@@ -504,20 +523,16 @@ st.markdown('<div class="order-box">', unsafe_allow_html=True)
 
 with st.form("customer_form"):
 
-    customer_name = st.text_input(
-        "Full Name *"
-    )
+    name = st.text_input("Full Name *")
 
-    customer_phone = st.text_input(
-        "Phone Number *"
-    )
+    phone = st.text_input("Phone Number *")
 
-    customer_address = st.text_area(
-        "Delivery Address *"
-    )
+    address = st.text_area("Delivery Address *")
+
+    notes = st.text_area("Additional Instructions (Optional)")
 
     submit = st.form_submit_button(
-        "SEND ORDER THROUGH WHATSAPP"
+        "PREPARE WHATSAPP ORDER"
     )
 
 
@@ -527,25 +542,29 @@ if submit:
 
         st.error("Please add products to your cart.")
 
-    elif not customer_name or not customer_phone or not customer_address:
+    elif not name.strip() or not phone.strip() or not address.strip():
 
-        st.error("Please complete all customer information.")
+        st.error("Please complete all required information.")
 
     elif WHATSAPP_NUMBER == "2348000000000":
 
-        st.error("Please configure the business WhatsApp number in the code.")
+        st.error("Please enter the actual business WhatsApp number in the code.")
 
     else:
 
         order_details = ""
 
-        for name, item in st.session_state.cart.items():
+        final_total = 0
+
+        for product_name, item in st.session_state.cart.items():
 
             amount = item["price"] * item["quantity"]
 
+            final_total += amount
+
             order_details += (
-                f"\n{name} - {item['quantity']} unit(s) "
-                f"- ₦{amount:,}"
+                f"\n{product_name}: {item['quantity']} unit(s)"
+                f" - ₦{amount:,}"
             )
 
         message = f"""
@@ -553,24 +572,25 @@ NEW ORDER - {BUSINESS_NAME}
 
 CUSTOMER DETAILS
 
-Name: {customer_name}
+Name: {name}
 
-Phone: {customer_phone}
+Phone: {phone}
 
-Address: {customer_address}
+Address: {address}
 
 ORDER DETAILS
 
 {order_details}
 
-TOTAL AMOUNT: ₦{total:,}
+TOTAL AMOUNT: ₦{final_total:,}
 
-Please confirm product availability and delivery.
+Additional Instructions: {notes}
+
+Please confirm availability and delivery arrangements.
 """
 
         whatsapp_url = (
-            f"https://wa.me/{WHATSAPP_NUMBER}"
-            f"?text={quote(message)}"
+            f"https://wa.me/{WHATSAPP_NUMBER}?text={quote(message)}"
         )
 
         st.success("Your order is ready.")
@@ -585,20 +605,111 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =====================================================
-# FOOTER
+# ADMINISTRATOR DASHBOARD
+# UPLOAD OR CHANGE BUSINESS IMAGES
 # =====================================================
 
 st.markdown(
-    f"""
-    <div class="footer">
-
-    <h3>{BUSINESS_NAME}</h3>
-
-    Quality & Farm-Fresh Raw Foodstuffs
-
-    <p>© 2026 All Rights Reserved.</p>
-
-    </div>
-    """,
+    '<h2 class="section-title">ADMINISTRATOR DASHBOARD</h2>',
     unsafe_allow_html=True
 )
+
+with st.expander("🔐 ADMIN LOGIN AND IMAGE MANAGEMENT"):
+
+    if not st.session_state.admin_login:
+
+        password = st.text_input(
+            "Administrator Password",
+            type="password"
+        )
+
+        if st.button("LOGIN AS ADMIN"):
+
+            if password == ADMIN_PASSWORD:
+
+                st.session_state.admin_login = True
+
+                st.success("Administrator access granted.")
+
+                st.rerun()
+
+            else:
+
+                st.error("Incorrect administrator password.")
+
+    if st.session_state.admin_login:
+
+        st.success("Welcome to the administrator dashboard.")
+
+        st.subheader("Upload or Replace Business Images")
+
+        selected = st.selectbox(
+            "Select image category",
+            list(IMAGES.keys())
+        )
+
+        filename = IMAGES[selected]
+
+        uploaded = st.file_uploader(
+            f"Upload {selected}",
+            type=["jpg", "jpeg", "png", "webp"]
+        )
+
+        if uploaded:
+
+            st.image(
+                uploaded,
+                caption="Image preview",
+                use_container_width=True
+            )
+
+            if st.button("SAVE IMAGE"):
+
+                destination = ASSET_FOLDER / filename
+
+                destination.write_bytes(
+                    uploaded.getvalue()
+                )
+
+                st.success(
+                    f"Image successfully saved as {filename}"
+                )
+
+                st.rerun()
+
+        st.divider()
+
+        st.subheader("Image Upload Status")
+
+        for label, filename in IMAGES.items():
+
+            if (ASSET_FOLDER / filename).exists():
+
+                st.success(f"{label}: {filename} - Uploaded")
+
+            else:
+
+                st.warning(f"{label}: {filename} - Missing")
+
+        if st.button("LOGOUT ADMIN"):
+
+            st.session_state.admin_login = False
+
+            st.rerun()
+
+
+# =====================================================
+# FOOTER
+# =====================================================
+
+st.markdown(f"""
+<div class="footer">
+
+<h3>{BUSINESS_NAME}</h3>
+
+<p>{TAGLINE}</p>
+
+<p>© 2026 All Rights Reserved.</p>
+
+</div>
+""", unsafe_allow_html=True)
